@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "pqueue.jhibler.h"
-#define NUM_PROCESS 10
+
 
 typedef enum EventTypeEnum {
     PROCESS_SUBMITTED,
@@ -58,7 +58,7 @@ void printEvent(Event *event) {
                process->lastTime, process->pid);
     else if (event->eventType == PROCESS_ENDS)
         printf("T = %d PROCESS_ENDS pid = %d\n",
-               process->lastTime, process->pid);
+               process->lastTime + process->burstTime, process->pid);
 }
 
 void runSimulation(int schedulerType, int quantum, PQueueNode *eventPQueue){
@@ -127,18 +127,4 @@ void runSimulation(int schedulerType, int quantum, PQueueNode *eventPQueue){
 
     printf("\n");
     printf("%d processes; Mean wait time = %.2f\n", 5, (double) totalWaitTime/5);
-}
-int main(int argc, char *argv[]) {
-    PQueueNode *eventQueue = NULL;
-    Process* processes = createProcesses();
-    enqueueProcesses(&eventQueue, processes, 5);
-    runSimulation(1,0,eventQueue);
-    runSimulation(2,0,eventQueue);
-    //printQueue(eventQueue,(void*)printEvent);
-
-    //tests
-    Process *process =createProcesses();
-    int x = processes[4].pid;
-    printf("%d",x);
-    return (0);
 }
