@@ -2,7 +2,6 @@
 #include <stdlib.h>
 #include "pqueue.jhibler.h"
 
-
 typedef enum EventTypeEnum {
     PROCESS_SUBMITTED,
     PROCESS_STARTS,
@@ -127,4 +126,12 @@ void runSimulation(int schedulerType, int quantum, PQueueNode *eventPQueue){
 
     printf("\n");
     printf("%d processes; Mean wait time = %.2f\n", 5, (double) totalWaitTime/5);
+}
+int main(){
+    Process* processes = createProcesses();
+    PQueueNode *eventPQ = NULL;
+    enqueueProcesses(&eventPQ,processes,5);
+
+    //change schedulerType to 2 for SFJ
+    runSimulation(1,0,eventPQ);
 }
