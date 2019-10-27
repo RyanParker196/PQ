@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
+#include <memory.h>
 #include "pqueue.jhibbele.h"
 
 //======================================================================================================================
@@ -47,7 +48,6 @@ void enqueueProcesses(PQueueNode **eventPQueue, Process *processes, int numProce
         event = (Event *) malloc(sizeof(Event));
         event->eventType = PROCESS_SUBMITTED;
         event->process = &processes[i];
-
         enqueue(eventPQueue, event->process->lastTime, event);
     }
 }
@@ -71,6 +71,7 @@ void printEvent(Event *event) {
 //======================================================================================================================
 
 int genExpRand(double mean) {
+    seed48(1);
     double r, t;
     int rtnval ;
     r = drand48();
@@ -93,6 +94,7 @@ Process *createRandomProcesses(int numProcesses , double meanBurstTime) {
         processes[i].numPreemptions = 0;
         processes[i].burstTime = (int) genExpRand(25);
     }
+    return processes;
 }
 
 //======================================================================================================================
@@ -102,7 +104,7 @@ void enqueueRandomProcesses(int numProcesses , PQueueNode **eventQueue , Process
     for (int i = 0; i < numProcesses; ++i ) {
         Event *event;
         event = (Event *) malloc(sizeof(Event));
-//        memset(event, 0, sizeof(Event));
+        memset(event, 0, sizeof(Event));
         event->eventType = PROCESS_SUBMITTED;
         event->process = &processes[i];
         enqueue(eventQueue, t, event) ;
