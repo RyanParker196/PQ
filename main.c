@@ -1,6 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include "pqueue.jhibler.h"
+#include "pqueue.jhibbele.h"
+
+//======================================================================================================================
 
 typedef enum EventTypeEnum {
     PROCESS_SUBMITTED,
@@ -22,9 +24,10 @@ typedef struct {
     Process *process;
 } Event;
 
+//======================================================================================================================
+
 Process *createProcesses(){
     Process *processes = (Process *) malloc(5 * sizeof(Process));
-
     int burstTimes[5] = {6, 7, 2, 5, 2};
     int lastTimes[5] = {0, 3, 4, 6, 6};
     for (int i = 0; i < 5; ++i) {
@@ -34,6 +37,8 @@ Process *createProcesses(){
     }
     return processes;
 }
+
+//======================================================================================================================
 
 void enqueueProcesses(PQueueNode **eventPQueue, Process *processes, int numProcesses){
     for (int i = 0; i < numProcesses; ++i) {
@@ -45,6 +50,8 @@ void enqueueProcesses(PQueueNode **eventPQueue, Process *processes, int numProce
         enqueue(eventPQueue, event->process->lastTime, event);
     }
 }
+
+//======================================================================================================================
 
 void printEvent(Event *event) {
     Process *process;
@@ -60,21 +67,22 @@ void printEvent(Event *event) {
                process->lastTime + process->burstTime, process->pid);
 }
 
+//======================================================================================================================
+
 void runSimulation(int schedulerType, int quantum, PQueueNode *eventPQueue){
     Process *process;
-    int waitTime = 0;
     int totalWaitTime = 0;
     int busy = 0;
     PQueueNode *processQueue = NULL;
     Event *newEvent = NULL;
     int currentTime = getMinPriority(eventPQueue);
     Event *event = dequeue(&eventPQueue);
-    while (event != NULL){
 
+    while (event != NULL) {
         process = event->process;
-        if(event->eventType == PROCESS_SUBMITTED){
+        if (event->eventType == PROCESS_SUBMITTED) {
             process->waitTime = currentTime;
-            if (busy == 0){
+            if (busy == 0) {
                 //printEvent(event);
                 printf("T = %d PROCESS_SUBMITTED pid = %d\n", currentTime, process->pid);
                 newEvent = (Event *) malloc(sizeof(Event));
@@ -82,34 +90,51 @@ void runSimulation(int schedulerType, int quantum, PQueueNode *eventPQueue){
                 newEvent->process = process;
                 enqueue(&eventPQueue, currentTime, newEvent);
                 busy = 1;
-            } else{
+            } else {
                 //printEvent(event);
                 printf("T = %d PROCESS_SUBMITTED pid = %d\n", currentTime, process->pid);
 
-                if (schedulerType == 2)
-                {
-                    enqueue(&processQueue,process->burstTime,process);
-                }else if (schedulerType == 1){
-                    enqueue(&processQueue,0,process);
+                if (schedulerType == 2) {
+                    enqueue(&processQueue, process->burstTime, process);
+                } else if (schedulerType == 1) {
+                    enqueue(&processQueue, 0, process);
+                } else if (schedulerType == 3) {
+                    enqueue(&processQueue, currentTime, process);
                 }
-
             }
-        } else if(event->eventType == PROCESS_STARTS){
+        } else if (event->eventType == PROCESS_STARTS) {
+            if (schedulerType == 3 && process->burstTime > quantum) {
+                newEvent = (Event *) malloc(sizeof(Event));
+                newEvent->eventType = PROCESS_TIMESLICE_EXPIRES;
+                process->waitTime += quantum;
+                newEvent->process = process;
+                enqueue(&eventPQueue, currentTime + quantum, newEvent);
+            } else {
+                printf("T = %d PROCESS_STARTS pid = %d\n", currentTime, process->pid);
+                process->waitTime = currentTime - process->waitTime;
+                totalWaitTime += process->waitTime;
+                newEvent = (Event *) malloc(sizeof(Event));
+                newEvent->eventType = PROCESS_ENDS;
+                newEvent->process = process;
+                enqueue(&eventPQueue, currentTime + process->burstTime, newEvent);
+            }
+        } else if (event->eventType == PROCESS_TIMESLICE_EXPIRES) {
+            process->burstTime = process->burstTime - quantum;
+            printf("T = %d PROCESS TIMESLICE EXPIRES pid = %d\n", currentTime, process->pid);
+            enqueue(&processQueue, currentTime, process);
+            if (queueLength(processQueue) > 0) {
+                process = dequeue(&processQueue);
+                newEvent = (Event *) malloc(sizeof(Event));
+                newEvent->eventType = PROCESS_STARTS;
+                newEvent->process = process;
+                enqueue(&eventPQueue, currentTime, newEvent);
+            } else {
+                busy = 0;
+            }
+        } else if (event->eventType == PROCESS_ENDS) {
             //printEvent(event);
-            printf("T = %d PROCESS_STARTS pid = %d\n", currentTime, process->pid);
-            process->waitTime = currentTime - process->waitTime;
-            totalWaitTime += process->waitTime;
-
-            newEvent = (Event *) malloc(sizeof(Event));
-            newEvent->eventType = PROCESS_ENDS;
-            newEvent->process = process;
-            enqueue(&eventPQueue, currentTime + process->burstTime, newEvent);
-        } else if(event->eventType == PROCESS_ENDS){
-            //printEvent(event);
-            printf("T = %d PROCESS_ENDS pid = %d wait time = %d\n", currentTime, process->pid,process->waitTime);
-
-
-            if (queueLength(processQueue) > 0){
+            printf("T = %d PROCESS_ENDS pid = %d wait time = %d\n", currentTime, process->pid, process->waitTime);
+            if (queueLength(processQueue) > 0) {
                 process = dequeue(&processQueue);
                 newEvent = (Event *) malloc(sizeof(Event));
                 newEvent->eventType = PROCESS_STARTS;
@@ -123,15 +148,17 @@ void runSimulation(int schedulerType, int quantum, PQueueNode *eventPQueue){
         currentTime = getMinPriority(eventPQueue);
         event = dequeue(&eventPQueue);
     }
-
     printf("\n");
-    printf("%d processes; Mean wait time = %.2f\n", 5, (double) totalWaitTime/5);
+    printf("Mean wait time = %.2f\n", (double) totalWaitTime/5);
 }
-int main(){
+
+//======================================================================================================================
+
+int main() {
     Process* processes = createProcesses();
     PQueueNode *eventPQ = NULL;
     enqueueProcesses(&eventPQ,processes,5);
 
     //change schedulerType to 2 for SFJ
-    runSimulation(1,0,eventPQ);
+    runSimulation(3,4,eventPQ);
 }
