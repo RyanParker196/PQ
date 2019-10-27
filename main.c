@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <math.h>
 #include "pqueue.jhibbele.h"
 
 //======================================================================================================================
@@ -69,6 +70,48 @@ void printEvent(Event *event) {
 
 //======================================================================================================================
 
+int genExpRand(double mean) {
+    double r, t;
+    int rtnval ;
+    r = drand48();
+    t = -log(1-r) * mean;
+    rtnval = (int) floor(t);
+    if (rtnval == 0) {
+        rtnval = 1;
+    }
+    return (rtnval);
+}
+
+//======================================================================================================================
+
+Process *createRandomProcesses(int numProcesses , double meanBurstTime) {
+    Process *processes = (Process *) malloc(numProcesses * sizeof(Process));
+    for (int i = 0; i < numProcesses; ++i) {
+        processes[i].pid = i + 1; // start the process IDs at 1 instead of zero
+        processes[i].waitTime = 0;
+        processes[i].lastTime = 0;
+        processes[i].numPreemptions = 0;
+        processes[i].burstTime = (int) genExpRand(25);
+    }
+}
+
+//======================================================================================================================
+
+void enqueueRandomProcesses(int numProcesses , PQueueNode **eventQueue , Process *processes , double meanIAT) {
+    int t = 0;
+    for (int i = 0; i < numProcesses; ++i ) {
+        Event *event;
+        event = (Event *) malloc(sizeof(Event));
+//        memset(event, 0, sizeof(Event));
+        event->eventType = PROCESS_SUBMITTED;
+        event->process = &processes[i];
+        enqueue(eventQueue, t, event) ;
+        t = t + (int) genExpRand(meanIAT);
+    }
+}
+
+//======================================================================================================================
+
 void runSimulation(int schedulerType, int quantum, PQueueNode *eventPQueue){
     Process *process;
     int totalWaitTime = 0;
@@ -83,7 +126,6 @@ void runSimulation(int schedulerType, int quantum, PQueueNode *eventPQueue){
         if (event->eventType == PROCESS_SUBMITTED) {
             process->waitTime = currentTime;
             if (busy == 0) {
-                //printEvent(event);
                 printf("T = %d PROCESS_SUBMITTED pid = %d\n", currentTime, process->pid);
                 newEvent = (Event *) malloc(sizeof(Event));
                 newEvent->eventType = PROCESS_STARTS;
@@ -91,7 +133,6 @@ void runSimulation(int schedulerType, int quantum, PQueueNode *eventPQueue){
                 enqueue(&eventPQueue, currentTime, newEvent);
                 busy = 1;
             } else {
-                //printEvent(event);
                 printf("T = %d PROCESS_SUBMITTED pid = %d\n", currentTime, process->pid);
 
                 if (schedulerType == 2) {
@@ -132,7 +173,6 @@ void runSimulation(int schedulerType, int quantum, PQueueNode *eventPQueue){
                 busy = 0;
             }
         } else if (event->eventType == PROCESS_ENDS) {
-            //printEvent(event);
             printf("T = %d PROCESS_ENDS pid = %d wait time = %d\n", currentTime, process->pid, process->waitTime);
             if (queueLength(processQueue) > 0) {
                 process = dequeue(&processQueue);
@@ -149,7 +189,7 @@ void runSimulation(int schedulerType, int quantum, PQueueNode *eventPQueue){
         event = dequeue(&eventPQueue);
     }
     printf("\n");
-    printf("Mean wait time = %.2f\n", (double) totalWaitTime/5);
+    printf("Mean wait time = %.2f\n", (double) totalWaitTime / 5);
 }
 
 //======================================================================================================================
