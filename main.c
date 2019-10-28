@@ -1,3 +1,5 @@
+//Partner: Ryan Parker
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
@@ -32,12 +34,12 @@ double mean;
 
 //======================================================================================================================
 
-Process *createProcesses(){
+Process *createProcesses() {
     Process *processes = (Process *) malloc(5 * sizeof(Process));
     int burstTimes[5] = {6, 7, 2, 5, 2};
     int lastTimes[5] = {0, 3, 4, 6, 6};
     for (int i = 0; i < 5; ++i) {
-        processes[i].pid = i +1;
+        processes[i].pid = i + 1;
         processes[i].lastTime = lastTimes[i];
         processes[i].burstTime = burstTimes[i];
     }
@@ -46,7 +48,7 @@ Process *createProcesses(){
 
 //======================================================================================================================
 
-void enqueueProcesses(PQueueNode **eventPQueue, Process *processes, int numProcesses){
+void enqueueProcesses(PQueueNode **eventPQueue, Process *processes, int numProcesses) {
     for (int i = 0; i < numProcesses; ++i) {
         Event *event;
         event = (Event *) malloc(sizeof(Event));
@@ -195,37 +197,36 @@ void runSimulation(int schedulerType, int quantum, PQueueNode *eventPQueue){
         event = dequeue(&eventPQueue);
     }
     printf("\n");
-    printf("Mean wait time = %.2f\n", (double) totalWaitTime / 1000);
+    printf("Mean wait time = %.2f\n", (double) totalWaitTime / 5);
     mean = totalWaitTime / 1000;
 }
 
 //======================================================================================================================
 
 int main() {
-    unsigned short seed = 5;
-    seed48(&seed);
-
-    PQueueNode *eventPQ = NULL;
-
-    Process* processes = createRandomProcesses(1000, 25);
-    enqueueRandomProcesses(1000, &eventPQ, processes, 25);
-
-    runSimulation(2, 4, eventPQ);
-
-    double total = 0;
-    for (int p = 0; p < 1000; ++p) {
-        double difference = arr[p] - mean;
-        total = total + pow(difference,2);
-    }
-
-    double std = sqrt(total / 1000);
-
-    printf("%.2f\n",std);
-
-//    Process* processes = createProcesses();
-//    PQueueNode *eventPQ = NULL;
-//    enqueueProcesses(&eventPQ, processes, 5);
+//    unsigned short seed = 1;
+//    seed48(&seed);
 //
-//    //change schedulerType to 2 for SFJ
-//    runSimulation(3, 4, eventPQ);
+//    PQueueNode *eventPQ = NULL;
+//    Process* processes = createRandomProcesses(1000, 25);
+//    enqueueRandomProcesses(1000, &eventPQ, processes, 25);
+//
+//    runSimulation(2, 4, eventPQ);
+//
+//    double total = 0;
+//    for (int p = 0; p < 1000; ++p) {
+//        double difference = arr[p] - mean;
+//        total = total + pow(difference,2);
+//    }
+//
+//    double std = sqrt(total / 1000);
+//
+//    printf("%.2f\n",std);
+
+    Process* processes = createProcesses();
+    PQueueNode *eventPQ = NULL;
+    enqueueProcesses(&eventPQ, processes, 5);
+
+    //change schedulerType to 2 for SFJ, 3 for RR, and 1 for FCFS
+    runSimulation(3, 4, eventPQ);
 }
